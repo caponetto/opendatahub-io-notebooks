@@ -119,5 +119,12 @@ jobs:
           IMAGE_REGISTRY: "localhost:5000/workbench-images"
           CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }}"
 
+      - name: "pull_request: Run Trivy vulnerability scanner"
+        if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
+        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2  # v0.23.0
+        with:
+          image-ref: 'localhost:5000/workbench-images/${{ inputs.target }}:${{ github.sha }}'
+          ignore-unfixed: true
+
       - run: df -h
         if: "${{ !cancelled() }}"
