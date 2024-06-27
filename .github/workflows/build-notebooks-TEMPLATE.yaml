@@ -129,7 +129,10 @@ jobs:
 
       - name: "pull_request: run Trivy vulnerability scanner"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
+        env:
+          TMPDIR: /home/runner/.local/share/containers
         run: |
+          sudo rm -rf /tmp/*
           # Install trivy
           sudo apt-get install wget apt-transport-https gnupg
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
@@ -144,14 +147,14 @@ jobs:
           podman system df
           podman images -a
           # Run trivy
-          trivy image $IMAGE_NAME --exit-code 0 --no-progress --format template --template "@/tmp/html.tpl" -o report.html --severity HIGH,CRITICAL --scanners vuln
+          trivy image $IMAGE_NAME --exit-code 0 --no-progress --format template --template "@/tmp/html.tpl" -o /tmp/trivy-report.html --severity HIGH,CRITICAL --scanners vuln
 
       - name: "pull_request: upload Trivy vulnerability scanner report"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
-          path: trivy-report.html
+          path: /tmp/trivy-report.html
 
       - run: df -h
         if: "${{ !cancelled() }}"
