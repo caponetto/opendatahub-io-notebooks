@@ -132,6 +132,9 @@ jobs:
           IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
           # Download HTML template
           curl -sSL -o /tmp/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
+          # Debug
+          podman system df
+          podman images -a
           # Run trivy
           trivy image $IMAGE_NAME --exit-code 0 --no-progress --format template --template "@/tmp/html.tpl" -o report.html --severity HIGH,CRITICAL --scanners vuln
 
