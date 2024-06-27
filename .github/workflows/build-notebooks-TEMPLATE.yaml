@@ -141,7 +141,7 @@ jobs:
                 --scanners vuln,secret \
                 --ignore-unfixed --exit-code 0 --timeout 30m \
                 --severity HIGH,CRITICAL \
-                # --format template --template "@/report/html.tpl" -o /report/trivy-report.html \
+                --format template --template "@/report/html.tpl" -o /report/trivy-report.html \
                 $IMAGE_NAME
 
       - name: "pull_request: upload Trivy vulnerability scanner report"
