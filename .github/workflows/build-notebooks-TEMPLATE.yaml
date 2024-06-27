@@ -133,6 +133,12 @@ jobs:
           TMPDIR: /home/runner/.local/share/containers
         run: |
           sudo rm -rf /tmp/*
+          podman image prune -a -f
+          podman system prune -f
+          podman builder prune -a -f
+          export TMPDIR=/home/runner/.local/share/containers
+          df -h
+          du -sh /home/runner/.local/share/containers
           # Install trivy
           sudo apt-get install wget apt-transport-https gnupg
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
