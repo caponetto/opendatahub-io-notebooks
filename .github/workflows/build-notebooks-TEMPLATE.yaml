@@ -119,5 +119,28 @@ jobs:
           IMAGE_REGISTRY: "localhost:5000/workbench-images"
           CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }}"
 
+      - name: "pull_request: run Trivy vulnerability scanner"
+        if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
+        run: |
+          # Install trivy
+          sudo apt-get install wget apt-transport-https gnupg
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+          # Get the image name
+          IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
+          # Download HTML template
+          curl -sSL -o /tmp/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
+          # Run trivy
+          trivy image $IMAGE_NAME --exit-code 0 --no-progress --format template --template "@/tmp/html.tpl" -o report.html --severity HIGH,CRITICAL
+
+      - name: "pull_request: upload Trivy vulnerability scanner report"
+        if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.html
+
       - run: df -h
         if: "${{ !cancelled() }}"
