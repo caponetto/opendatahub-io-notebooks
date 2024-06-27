@@ -94,6 +94,7 @@ jobs:
           # should at least reset storage when touching storage.conf
           podman system reset --force
           mkdir -p $HOME/.local/share/containers/storage/tmp
+          systemctl --user enable --now podman.socket
 
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
       - name: "push: make ${{ inputs.target }}"
@@ -123,14 +124,16 @@ jobs:
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
         id: get_image_name
         run: |
+          podman images
           IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
           if [ -z "$IMAGE_NAME" ]; then
             echo "Failed to get image name"
             exit 1
           fi
+          echo "image_name=$IMAGE_NAME"
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
-      - name: "pull_request: Run Trivy vulnerability scanner"
+      - name: "pull_request: run Trivy vulnerability scanner"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
         uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2  # v0.23.0
         with:
