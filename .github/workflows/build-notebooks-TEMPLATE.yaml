@@ -130,15 +130,18 @@ jobs:
       - name: "pull_request: run Trivy vulnerability scanner"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
         run: |
-          curl -sSL -o /tmp/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
+          REPORT_FOLDER=${{ github.workspace }}/report
+          mkdir -p $REPORT_FOLDER
+          curl -sSL -o $REPORT_FOLDER/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
           IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
           podman run --rm \
+              -v $REPORT_FOLDER:/report \
               docker.io/aquasec/trivy:0.52.2 \
                 image \
                 --scanners vuln,secret \
                 --ignore-unfixed --exit-code 0 --timeout 30m \
                 --severity HIGH,CRITICAL \
-                # --format template --template "@/tmp/html.tpl" -o /tmp/trivy-report.html \
+                # --format template --template "@/report/html.tpl" -o /report/trivy-report.html \
                 $IMAGE_NAME
 
       - name: "pull_request: upload Trivy vulnerability scanner report"
@@ -146,7 +149,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
-          path: /tmp/trivy-report.html
+          path: ${{ github.workspace }}/report/trivy-report.html
 
       - run: df -h
         if: "${{ !cancelled() }}"
