@@ -122,36 +122,18 @@ jobs:
       - name: "pull_request: run Trivy vulnerability scanner"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
         run: |
-          # List all images sorted by creation date and get the image IDs with their tags
-          images=$(podman images --format '{{.ID}} {{.Repository}}:{{.Tag}} {{.CreatedAt}}' | sort -k3 -r)
-
-          # Get the most recent image ID and its associated tag
-          most_recent_image_info=$(echo "$images" | head -n 1)
-          most_recent_image_id=$(echo "$most_recent_image_info" | awk '{print $1}')
-          most_recent_image_tag=$(echo "$most_recent_image_info" | awk '{print $2}')
-
-          # Iterate over all image IDs
-          for image_info in $images; do
-            image_id=$(echo "$image_info" | awk '{print $1}')
-            if [[ "$image_id" != "$most_recent_image_id" ]]; then
-              echo "Deleting image: $image_id"
-              podman rmi $image_id
-            else
-              echo "Keeping most recent image: $image_id ($most_recent_image_tag)"
-            fi
-          done
-
           # Install trivy
           sudo apt-get install wget apt-transport-https gnupg
           wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
           echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
           sudo apt-get update
           sudo apt-get install trivy
-
+          # Get the image name
+          IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
           # Download HTML template
           curl -sSL -o /tmp/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
           # Run trivy
-          trivy image $most_recent_image_tag --exit-code 0 --no-progress --format template --template "@/tmp/html.tpl" -o report.html --severity HIGH,CRITICAL --scanners vuln
+          trivy image $IMAGE_NAME --exit-code 0 --no-progress --format template --template "@/tmp/html.tpl" -o report.html --severity HIGH,CRITICAL --scanners vuln
 
       - name: "pull_request: upload Trivy vulnerability scanner report"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
