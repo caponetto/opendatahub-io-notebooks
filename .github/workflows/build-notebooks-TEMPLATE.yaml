@@ -103,11 +103,6 @@ jobs:
           podman system reset --force
           mkdir -p $HOME/.local/share/containers/storage/tmp
 
-          # Starting systemd user service
-          systemctl --user start podman.socket
-          echo "PODMAN_SOCK=/run/user/${UID}/podman/podman.sock" >> $GITHUB_ENV
-          echo "DOCKER_HOST=unix:///run/user/${UID}/podman/podman.sock" >> $GITHUB_ENV
-
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
       - name: "push: make ${{ inputs.target }}"
         run: "make ${{ inputs.target }}"
@@ -138,8 +133,6 @@ jobs:
           curl -sSL -o /tmp/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
           IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
           podman run --rm \
-              -v ${PODMAN_SOCK}:/var/run/docker.sock \
-              -v ${{github.workspace}}:${{github.workspace}} \
               docker.io/aquasec/trivy:0.52.2 \
                 image \
                 --scanners vuln,secret \
