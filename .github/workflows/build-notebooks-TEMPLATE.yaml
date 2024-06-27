@@ -147,7 +147,7 @@ jobs:
       - name: "pull_request: show Trivy vulnerability scanner report"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
         run: |
-          cat $REPORT_FOLDER/trivy-report.md >> $GITHUB_STEP_SUMMARY
+          cat ${{ github.workspace }}/report/trivy-report.md >> $GITHUB_STEP_SUMMARY
 
       - run: df -h
         if: "${{ !cancelled() }}"
