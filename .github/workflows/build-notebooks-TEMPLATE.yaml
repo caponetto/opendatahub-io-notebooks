@@ -103,6 +103,11 @@ jobs:
           podman system reset --force
           mkdir -p $HOME/.local/share/containers/storage/tmp
 
+          # Starting systemd user service
+          systemctl --user start podman.socket
+          echo "PODMAN_SOCK=/run/user/${UID}/podman/podman.sock" >> $GITHUB_ENV
+          echo "DOCKER_HOST=unix:///run/user/${UID}/podman/podman.sock" >> $GITHUB_ENV
+
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
       - name: "push: make ${{ inputs.target }}"
         run: "make ${{ inputs.target }}"
@@ -129,31 +134,19 @@ jobs:
 
       - name: "pull_request: run Trivy vulnerability scanner"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
-        env:
-          TMPDIR: /home/runner/.local/share/containers
         run: |
-          sudo rm -rf /tmp/*
-          podman image prune -a -f
-          podman system prune -f
-          podman builder prune -a -f
-          export TMPDIR=/home/runner/.local/share/containers
-          df -h
-          du -sh /home/runner/.local/share/containers
-          # Install trivy
-          sudo apt-get install wget apt-transport-https gnupg
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
-          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-          sudo apt-get update
-          sudo apt-get install trivy
-          # Get the image name
-          IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
-          # Download HTML template
           curl -sSL -o /tmp/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
-          # Debug
-          podman system df
-          podman images -a
-          # Run trivy
-          trivy image $IMAGE_NAME --exit-code 0 --no-progress --format template --template "@/tmp/html.tpl" -o /tmp/trivy-report.html --severity HIGH,CRITICAL --scanners vuln
+          IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
+          podman run --rm \
+              -v ${PODMAN_SOCK}:/var/run/docker.sock \
+              -v ${{github.workspace}}:${{github.workspace}} \
+              docker.io/aquasec/trivy:0.52.2 \
+                image \
+                --scanners vuln,secret \
+                --ignore-unfixed --exit-code 0 \
+                --severity HIGH,CRITICAL \
+                --format template --template "@/tmp/html.tpl" -o /tmp/trivy-report.html \
+                $IMAGE_NAME
 
       - name: "pull_request: upload Trivy vulnerability scanner report"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
