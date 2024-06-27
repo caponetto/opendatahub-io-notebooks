@@ -136,7 +136,7 @@ jobs:
               docker.io/aquasec/trivy:0.52.2 \
                 image \
                 --scanners vuln,secret \
-                --ignore-unfixed --exit-code 0 --timeout 10m0s \
+                --ignore-unfixed --exit-code 0 --timeout 30m0s \
                 --severity HIGH,CRITICAL \
                 --format template --template "@/tmp/html.tpl" -o /tmp/trivy-report.html \
                 $IMAGE_NAME
