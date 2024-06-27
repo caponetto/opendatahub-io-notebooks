@@ -129,8 +129,6 @@ jobs:
 
       - name: "pull_request: run Trivy vulnerability scanner"
         if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
-        env:
-          TRIVY_TIMEOUT: 10m
         run: |
           curl -sSL -o /tmp/html.tpl https://raw.githubusercontent.com/aquasecurity/trivy/v0.52.2/contrib/html.tpl
           IMAGE_NAME=$(podman images --format '{{.Repository}}:{{.Tag}}' --no-trunc | head -n 1)
@@ -138,7 +136,7 @@ jobs:
               docker.io/aquasec/trivy:0.52.2 \
                 image \
                 --scanners vuln,secret \
-                --ignore-unfixed --exit-code 0 \
+                --ignore-unfixed --exit-code 0 --timeout 10m0s \
                 --severity HIGH,CRITICAL \
                 --format template --template "@/tmp/html.tpl" -o /tmp/trivy-report.html \
                 $IMAGE_NAME
