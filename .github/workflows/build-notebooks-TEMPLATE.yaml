@@ -94,7 +94,6 @@ jobs:
           # should at least reset storage when touching storage.conf
           podman system reset --force
           mkdir -p $HOME/.local/share/containers/storage/tmp
-          systemctl --user enable --now podman.socket
 
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
       - name: "push: make ${{ inputs.target }}"
