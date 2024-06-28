@@ -1,5 +1,5 @@
 ---
-"name": "Build Notebooks"
+"name": "Build Notebooks - Pull Request"
 "on":
   "pull_request":
 
