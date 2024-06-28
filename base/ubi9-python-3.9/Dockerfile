@@ -1,5 +1,7 @@
 FROM registry.access.redhat.com/ubi9/python-39:latest
 
+# Test
+
 LABEL name="odh-notebook-base-ubi9-python-3.9" \
       summary="Python 3.9 base image for ODH notebooks" \
       description="Base Python 3.9 builder image based on UBI9 for ODH notebooks" \
