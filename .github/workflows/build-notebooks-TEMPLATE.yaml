@@ -143,7 +143,7 @@ jobs:
                 --severity HIGH,CRITICAL \
                 --format template --template "@/report/trivy-markdown.tpl" -o /report/trivy-report.md \
                 $IMAGE_NAME
-         cat $REPORT_FOLDER/trivy-report.md >> $GITHUB_STEP_SUMMARY
+          cat $REPORT_FOLDER/trivy-report.md >> $GITHUB_STEP_SUMMARY
 
       - run: df -h
         if: "${{ !cancelled() }}"
