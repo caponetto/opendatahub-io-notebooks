@@ -1,7 +1,12 @@
 ---
-"name": "Build Notebooks - Pull Request"
-"on":
-  "pull_request":
+name: "Build Notebooks - Pull Request"
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize, labeled, unlabeled]
+
+concurrency:
+  group: ${{ format('build-notebooks-pr-{0}', github.event.pull_request.number) }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
