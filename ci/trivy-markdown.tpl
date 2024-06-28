@@ -1,22 +1,10 @@
+## Vulnerability Report by [Trivy](https://trivy.dev)
+
 <details>
   {{- if . }}
     {{- range . }}
       {{- if or (gt (len .Vulnerabilities) 0) (gt (len .Misconfigurations) 0) }}
-        <h3>Target:
-          <code>
-            {{- if and (eq .Class "os-pkgs") .Type }}
-              {{ .Type | toString | escapeXML }}
-              {{- if .Class }}
-                ({{ .Class | toString | escapeXML }})
-              {{- end }}
-            {{- else }}
-              {{ .Target | toString | escapeXML }}
-              {{- if .Type }}
-                ({{ .Type | toString | escapeXML }})
-              {{- end }}
-            {{- end }}
-          </code>
-        </h3>
+        <h3>Target: {{- if and (eq .Class "os-pkgs") .Type }} {{ .Type | toString | escapeXML }} ({{ .Class | toString | escapeXML }}) {{- else }} {{ .Target | toString | escapeXML }}{{ if .Type }} ({{ .Type | toString | escapeXML }}){{ end }} {{- end }}</h3>
         {{- if (gt (len .Vulnerabilities) 0) }}
           <h4>Vulnerabilities ({{ len .Vulnerabilities }})</h4>
           <table>
