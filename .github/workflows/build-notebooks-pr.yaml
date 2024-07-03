@@ -2,6 +2,8 @@
 "name": "Build Notebooks"
 "on":
   "pull_request":
+    branches: ["**"]
+    types: [opened, reopened, ready_for_review, synchronize, labeled, unlabeled]
 
 permissions:
   contents: read

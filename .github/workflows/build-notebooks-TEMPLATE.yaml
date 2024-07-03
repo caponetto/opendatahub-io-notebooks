@@ -16,6 +16,10 @@ name: Build & Publish Notebook Servers (TEMPLATE)
         description: "top workflow's `github`"
         type: string
 
+concurrency:
+  group: ${{ fromJson(inputs.github).event.pull_request && format('build-notebooks-pr-{0}', fromJson(inputs.github).event.pull_request.number) || format('build-notebooks-{0}', fromJson(inputs.github).sha) }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -120,8 +124,23 @@ jobs:
           IMAGE_REGISTRY: "ghcr.io/${{ github.repository }}/workbench-images"
           CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }} --cache-to ${{ env.CACHE }}"
 
-      - name: "schedule: run Trivy vulnerability scanner"
-        if: "${{ fromJson(inputs.github).event_name == 'schedule' }}"
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+      - name: "pull_request: make ${{ inputs.target }}"
+        run: |
+          # start a black hole container registry as make target always does a push
+          mkdir -p $HOME/.config/containers/registries.conf.d/
+          cp ci/cached-builds/insecure_localhost_registry.conf $HOME/.config/containers/registries.conf.d/insecure_localhost_registry.conf
+          go run ci/cached-builds/dev_null_container_registry.go &
+          # build and push the image
+          make ${{ inputs.target }}
+        if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
+        env:
+          IMAGE_TAG: "${{ github.sha }}"
+          IMAGE_REGISTRY: "localhost:5000/workbench-images"
+          CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }}"
+
+      - name: "schedule|pull_request: run Trivy vulnerability scanner"
+        if: "${{ fromJson(inputs.github).event_name == 'schedule' || (fromJson(inputs.github).event_name == 'pull_request' && fromJson(inputs.github).event.label.name == 'trivy') }}"
         run: |
           TRIVY_VERSION=0.53.0
           REPORT_FOLDER=${{ github.workspace }}/report
@@ -131,7 +150,15 @@ jobs:
           mkdir -p $REPORT_FOLDER
           cp ci/$REPORT_TEMPLATE $REPORT_FOLDER
 
-          IMAGE_NAME=ghcr.io/${{ github.repository }}/workbench-images:${{ inputs.target }}-${{ github.ref_name }}_${{ github.sha }}
+          if [[ fromJson(inputs.github).event_name == 'schedule' ]]; then
+            IMAGE_NAME=ghcr.io/${{ github.repository }}/workbench-images:${{ inputs.target }}-${{ github.ref_name }}_${{ github.sha }}
+          elif [[ fromJson(inputs.github).event_name == 'pull_request' ]]; then
+            IMAGE_NAME=localhost:5000/workbench-images:${{ inputs.target }}-${{ github.sha }}
+          else
+            echo "Unsupported event_name: ${{ fromJson(inputs.github).event_name }}"
+            exit 1
+          fi
+
           echo "Scanning $IMAGE_NAME"
 
           # have trivy access podman socket,
@@ -150,21 +177,6 @@ jobs:
                 $IMAGE_NAME
 
           cat $REPORT_FOLDER/$REPORT_FILE >> $GITHUB_STEP_SUMMARY
-
-      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-      - name: "pull_request: make ${{ inputs.target }}"
-        run: |
-          # start a black hole container registry as make target always does a push
-          mkdir -p $HOME/.config/containers/registries.conf.d/
-          cp ci/cached-builds/insecure_localhost_registry.conf $HOME/.config/containers/registries.conf.d/insecure_localhost_registry.conf
-          go run ci/cached-builds/dev_null_container_registry.go &
-          # build and push the image
-          make ${{ inputs.target }}
-        if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
-        env:
-          IMAGE_TAG: "${{ github.sha }}"
-          IMAGE_REGISTRY: "localhost:5000/workbench-images"
-          CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }}"
 
       - run: df -h
         if: "${{ !cancelled() }}"
