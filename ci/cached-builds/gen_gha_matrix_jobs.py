@@ -108,6 +108,10 @@ def write_github_workflow_file(tree: dict[str, list[str]], path: pathlib.Path) -
             "workflow_dispatch": {},
             "schedule": [{ "cron": "0 2 * * *"}], # 2am UTC everyday
         },
+        "concurrency": {
+            "group": "${{ format('build-notebooks-{0}', github.sha) }}",
+            "cancel-in-progress": True,
+        },
         "jobs": jobs,
     }
 

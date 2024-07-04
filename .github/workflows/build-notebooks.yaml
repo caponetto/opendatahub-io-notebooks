@@ -14,6 +14,10 @@
             }
         ]
     },
+    "concurrency": {
+        "group": "${{ format('build-notebooks-{0}', github.sha) }}",
+        "cancel-in-progress": true
+    },
     "jobs": {
         "base-ubi8-python-3_8": {
             "needs": [],
