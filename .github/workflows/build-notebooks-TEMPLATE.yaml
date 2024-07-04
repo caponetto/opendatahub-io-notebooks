@@ -183,7 +183,7 @@ jobs:
                 image \
                 --image-src podman \
                 --podman-host /var/run/podman/podman.sock \
-                --scanners vuln,secret \
+                --scanners vuln,secret --ignore-unfixed \
                 --exit-code 0 --timeout 30m \
                 $SEVERITY_OPTION \
                 --format template --template "@/report/$REPORT_TEMPLATE" -o /report/$REPORT_FILE \
