@@ -1,6 +1,6 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
-# change
+# change2
 LABEL name="odh-notebook-jupyter-minimal-ubi8-python-3.8" \
     summary="Minimal Jupyter notebook image for ODH notebooks" \
     description="Minimal Jupyter notebook image with base Python 3.8 builder image based on UBI8 for ODH notebooks" \
