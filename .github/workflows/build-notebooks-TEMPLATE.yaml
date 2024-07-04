@@ -120,8 +120,42 @@ jobs:
           IMAGE_REGISTRY: "ghcr.io/${{ github.repository }}/workbench-images"
           CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }} --cache-to ${{ env.CACHE }}"
 
-      - name: "schedule: run Trivy vulnerability scanner"
-        if: "${{ fromJson(inputs.github).event_name == 'schedule' }}"
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+      - name: "pull_request: make ${{ inputs.target }}"
+        run: |
+          # start a black hole container registry as make target always does a push
+          mkdir -p $HOME/.config/containers/registries.conf.d/
+          cp ci/cached-builds/insecure_localhost_registry.conf $HOME/.config/containers/registries.conf.d/insecure_localhost_registry.conf
+          go run ci/cached-builds/dev_null_container_registry.go &
+          # build and push the image
+          make ${{ inputs.target }}
+        if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
+        env:
+          IMAGE_TAG: "${{ github.sha }}"
+          IMAGE_REGISTRY: "localhost:5000/workbench-images"
+          CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }}"
+
+      - name: "pull_request|schedule: resolve image name if Trivy scan should be run"
+        id: resolve-image
+        if: ${{ fromJson(inputs.github).event_name == 'pull_request' || fromJson(inputs.github).event_name == 'schedule' }}
+        env:
+          EVENT_NAME: ${{ fromJson(inputs.github).event_name }}
+          HAS_TRIVY_LABEL: ${{ contains(fromJson(inputs.github).event.pull_request.labels.*.name, 'trivy-scan') }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" && "$HAS_TRIVY_LABEL" == "true" ]]; then
+            IMAGE_NAME="localhost:5000/workbench-images:${{ inputs.target }}-${{ github.sha }}"
+            echo "image=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          elif [[ "$EVENT_NAME" == "schedule" ]]; then
+            IMAGE_NAME="ghcr.io/${{ github.repository }}/workbench-images:${{ inputs.target }}-${{ github.ref_name }}_${{ github.sha }}"
+            echo "image=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          fi
+
+          if [[ -z "$IMAGE_NAME" ]]; then
+            echo "Trivy scan won't run"
+          fi
+
+      - name: "Run Trivy vulnerability scanner"
+        if: ${{ steps.resolve-image.outputs.image }}
         run: |
           TRIVY_VERSION=0.53.0
           REPORT_FOLDER=${{ github.workspace }}/report
@@ -131,8 +165,14 @@ jobs:
           mkdir -p $REPORT_FOLDER
           cp ci/$REPORT_TEMPLATE $REPORT_FOLDER
 
-          IMAGE_NAME=ghcr.io/${{ github.repository }}/workbench-images:${{ inputs.target }}-${{ github.ref_name }}_${{ github.sha }}
+          IMAGE_NAME=${{ steps.resolve-image.outputs.image }}
           echo "Scanning $IMAGE_NAME"
+
+          SEVERITY_OPTION=""
+          # Report only higher vulnerabilities if not a pull request
+          if [ "${{ fromJson(inputs.github).event_name }}" != "pull_request" ]; then
+            SEVERITY_OPTION="--severity CRITICAL,HIGH"
+          fi
 
           # have trivy access podman socket,
           # https://github.com/aquasecurity/trivy/issues/580#issuecomment-666423279
@@ -150,21 +190,6 @@ jobs:
                 $IMAGE_NAME
 
           cat $REPORT_FOLDER/$REPORT_FILE >> $GITHUB_STEP_SUMMARY
-
-      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
-      - name: "pull_request: make ${{ inputs.target }}"
-        run: |
-          # start a black hole container registry as make target always does a push
-          mkdir -p $HOME/.config/containers/registries.conf.d/
-          cp ci/cached-builds/insecure_localhost_registry.conf $HOME/.config/containers/registries.conf.d/insecure_localhost_registry.conf
-          go run ci/cached-builds/dev_null_container_registry.go &
-          # build and push the image
-          make ${{ inputs.target }}
-        if: "${{ fromJson(inputs.github).event_name == 'pull_request' }}"
-        env:
-          IMAGE_TAG: "${{ github.sha }}"
-          IMAGE_REGISTRY: "localhost:5000/workbench-images"
-          CONTAINER_BUILD_CACHE_ARGS: "--cache-from ${{ env.CACHE }}"
 
       - run: df -h
         if: "${{ !cancelled() }}"
