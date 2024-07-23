@@ -44,19 +44,46 @@ jobs:
           df -h
 
           sudo apt-get update
-          sudo apt-get remove -y '^dotnet-.*'
-          sudo apt-get remove -y '^llvm-.*'
-          sudo apt-get remove -y 'php.*'
-          sudo apt-get remove -y '^mongodb-.*'
+          sudo apt-get purge -y \
+              '^llvm-.*' \
+              '^dotnet-.*' \
+              'php.*' \
+              '^mongodb-.*' \
+              '^mysql-.*' \
+              azure-cli \
+              google-cloud-sdk \
+              google-chrome-stable \
+              firefox \
+              powershell \
+              microsoft-edge-stable \
+              mono-devel
+
           sudo apt-get autoremove -y
           sudo apt-get clean
-          sudo rm -rf /usr/local/.ghcup &
-          sudo rm -rf /usr/local/lib/android &
-          sudo rm -rf /usr/local/share/boost &
-          sudo rm -rf /usr/local/lib/node_modules &
-          sudo rm -rf /usr/share/dotnet &
+
+          sudo rm -rf /home/runneradmin/.cargo &
+          sudo rm -rf /home/runneradmin/.rustup &
           sudo rm -rf /opt/ghc &
           sudo rm -rf /opt/hostedtoolcache/CodeQL &
+          sudo rm -rf /opt/hostedtoolcache/PyPy &
+          sudo rm -rf /opt/hostedtoolcache/node &
+          sudo rm -rf /opt/pipx &
+          sudo rm -rf /usr/lib/google-cloud-sdk &
+          sudo rm -rf /usr/lib/heroku &
+          sudo rm -rf /usr/lib/jvm &
+          sudo rm -rf /usr/local/.ghcup &
+          sudo rm -rf /usr/local/aws-cli &
+          sudo rm -rf /usr/local/aws-sam-cli &
+          sudo rm -rf /usr/local/julia1.10.4 &
+          sudo rm -rf /usr/local/lib/android &
+          sudo rm -rf /usr/local/lib/node_modules &
+          sudo rm -rf /usr/local/share/boost &
+          sudo rm -rf /usr/local/share/chromium &
+          sudo rm -rf /usr/local/share/powershell &
+          sudo rm -rf /usr/share/az_11.3.1 &
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /usr/share/miniconda &
+          sudo rm -rf /usr/share/swift &
 
           sudo docker image prune --all --force &
 
