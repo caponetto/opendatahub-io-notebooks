@@ -116,7 +116,7 @@ jobs:
       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push
       - name: "push|schedule: make ${{ inputs.target }}"
         run: |
-          SANITIZED_REF_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/_/g')
+          SANITIZED_REF_NAME=$(echo "${{ github.ref_name }}" | sed 's/[^a-zA-Z0-9._-]/_/g' | cut -c1-20)
           export IMAGE_TAG="${SANITIZED_REF_NAME}_${{ github.sha }}"
           make ${{ inputs.target }}
         if: ${{ fromJson(inputs.github).event_name == 'push' || fromJson(inputs.github).event_name == 'schedule' }}
