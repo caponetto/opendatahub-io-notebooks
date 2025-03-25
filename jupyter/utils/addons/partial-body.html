@@ -1,15 +1,53 @@
 <div id="loading-container">
-  <svg
-    class="pf-v6-c-spinner"
-    role="progressbar"
-    viewBox="0 0 100 100"
-    aria-label="Loading..."
-  >
-    <circle class="pf-v6-c-spinner__path" cx="50" cy="50" r="45" fill="none" />
-  </svg>
+  <iframe
+    id="loading-iframe"
+    scrolling="no"
+    style="
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      visibility: hidden;
+    "
+  ></iframe>
 </div>
 
 <script>
+  function loadIframeContent() {
+    const iframe = document.getElementById("loading-iframe");
+    const doc = iframe.contentDocument;
+
+    iframe.style.visibility = "hidden";
+    doc.open();
+    doc.write(`
+      <html>
+      <head>
+        <link rel="stylesheet" type="text/css" href="{{page_config.fullStaticUrl}}/pf.css" />
+        <style>
+          body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            margin: 0;
+          }
+        </style>
+      </head>
+      <body>
+        <svg class="pf-v6-c-spinner" role="progressbar" viewBox="0 0 100 100" aria-label="Loading...">
+          <circle class="pf-v6-c-spinner__path" cx="50" cy="50" r="45" fill="none" />
+        </svg>
+      </body>
+      </html>
+    `);
+    doc.close();
+    iframe.style.visibility = "visible";
+  }
+
   function checkForTargetElement() {
     const targetElement = document.querySelector(".lm-Widget.jp-LabShell#main");
     const loadingContainer = document.getElementById("loading-container");
@@ -19,5 +57,7 @@
     }
     requestAnimationFrame(checkForTargetElement);
   }
+
+  loadIframeContent();
   requestAnimationFrame(checkForTargetElement);
 </script>
