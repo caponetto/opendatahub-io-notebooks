@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3b66948ff6e68baa296173019bcbb7908ad306e0b5fa1387f8ba6aab2cefd41d"
+            "sha256": "b4f33c1acfe2f58d15484daa4d5313879105390ade8fccbc19aa65efefce0e8c"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -149,6 +149,14 @@
             ],
             "markers": "python_version >= '3.6' and python_version < '4'",
             "version": "==1.1.10"
+        },
+        "appnope": {
+            "hashes": [
+                "sha256:1de3860566df9caf38f01f86f65e0e13e379af54f9e4bee1e66b48f2efffd1ee",
+                "sha256:502575ee11cd7a28c0205f379b525beefebab9d161b7c964670864014ed7213c"
+            ],
+            "markers": "python_version >= '3.6'",
+            "version": "==0.1.4"
         },
         "argon2-cffi": {
             "hashes": [
@@ -1078,11 +1086,11 @@
         },
         "google-api-core": {
             "hashes": [
-                "sha256:9826900d88358ad3ac8978ad324e46793ad8137efe6d48ec51e259c0c40e3000",
-                "sha256:ec279085923652b0d2e4c72fd6bb926ee17e9c960f0b8a472df146a42493957e"
+                "sha256:810a63ac95f3c441b7c0e43d344e372887f62ce9071ba972eacf32672e072de9",
+                "sha256:81718493daf06d96d6bc76a91c23874dbf2fac0adbbf542831b805ee6e974696"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2.25.0rc1"
+            "version": "==2.24.2"
         },
         "google-auth": {
             "hashes": [
@@ -1471,12 +1479,12 @@
         },
         "jupyterlab": {
             "hashes": [
-                "sha256:7353c0704aec0e1219eb1e376c2d51f855a2522605f9ecdcab4993c006991ea3",
-                "sha256:a16a10a114360a4249c855e382b95260ebf2b91341884739dde954936096684d"
+                "sha256:857111a50bed68542bf55dca784522fe728f9f88b4fe69e8c585db5c50900419",
+                "sha256:afa9caf28c0cb966488be18e5e8daba9f018a1c4273a406b7d5006344cbc6d16"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.8'",
-            "version": "==4.2.7"
+            "markers": "python_version >= '3.9'",
+            "version": "==4.4.2"
         },
         "jupyterlab-git": {
             "hashes": [
